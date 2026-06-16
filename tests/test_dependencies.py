@@ -30,19 +30,19 @@ def client(app) -> TestClient:
 class TestDependencies:
 
     def test_get_product_from_path_404(self, client):
-        resp = client.get("/admin/products/non-existent")
+        resp = client.get("/admin/products/000000000000000000000000")
         assert resp.status_code == 404
 
     def test_get_product_from_path_ok(self, client):
-        client.post(
+        create_resp = client.post(
             "/admin/products",
             json={
-                "product_id": "test-product",
                 "name": "Test",
                 "mongo_uri": "mongodb://localhost",
                 "db_name": "test",
             },
         )
-        resp = client.get("/admin/products/test-product")
+        product_id = create_resp.json()["data"]["id"]
+        resp = client.get(f"/admin/products/{product_id}")
         assert resp.status_code == 200
         assert resp.json()["data"]["name"] == "Test"

@@ -1,3 +1,5 @@
+import uuid
+
 from app.models.product import ProductConfig, now_utc
 from app.repositories.product_repository import ProductRepository
 
@@ -9,10 +11,11 @@ class MemoryProductRepository(ProductRepository):
 
     async def create(self, product: ProductConfig) -> ProductConfig:
         now = now_utc()
+        product.id = uuid.uuid4().hex[:24]
         product.created_at = now
         product.updated_at = now
-        self._store[product.product_id] = product.model_copy(deep=True)
-        return self._store[product.product_id]
+        self._store[product.id] = product.model_copy(deep=True)
+        return self._store[product.id]
 
     async def get(self, product_id: str) -> ProductConfig | None:
         return self._store.get(product_id)

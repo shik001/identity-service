@@ -28,7 +28,6 @@ def client(app) -> TestClient:
 
 
 PAYLOAD = {
-    "product_id": "kol-intelligence",
     "name": "KOL Intelligence",
     "mongo_uri": "mongodb://localhost:27017",
     "db_name": "kol_intelligence",
@@ -41,13 +40,8 @@ class TestAdminAPI:
         resp = client.post("/admin/products", json=PAYLOAD)
         assert resp.status_code == 201
         data = resp.json()["data"]
-        assert data["product_id"] == "kol-intelligence"
+        assert data["id"] != ""
         assert data["name"] == "KOL Intelligence"
-
-    def test_create_duplicate(self, client):
-        client.post("/admin/products", json=PAYLOAD)
-        resp = client.post("/admin/products", json=PAYLOAD)
-        assert resp.status_code == 409
 
     def test_list_products_empty(self, client):
         resp = client.get("/admin/products")
@@ -61,19 +55,21 @@ class TestAdminAPI:
         assert len(resp.json()["data"]) == 1
 
     def test_get_product(self, client):
-        client.post("/admin/products", json=PAYLOAD)
-        resp = client.get("/admin/products/kol-intelligence")
+        create_resp = client.post("/admin/products", json=PAYLOAD)
+        product_id = create_resp.json()["data"]["id"]
+        resp = client.get(f"/admin/products/{product_id}")
         assert resp.status_code == 200
         assert resp.json()["data"]["name"] == "KOL Intelligence"
 
     def test_get_product_not_found(self, client):
-        resp = client.get("/admin/products/non-existent")
+        resp = client.get("/admin/products/000000000000000000000000")
         assert resp.status_code == 404
 
     def test_update_product(self, client):
-        client.post("/admin/products", json=PAYLOAD)
+        create_resp = client.post("/admin/products", json=PAYLOAD)
+        product_id = create_resp.json()["data"]["id"]
         resp = client.put(
-            "/admin/products/kol-intelligence",
+            f"/admin/products/{product_id}",
             json={"name": "Updated"},
         )
         assert resp.status_code == 200
@@ -81,16 +77,17 @@ class TestAdminAPI:
 
     def test_update_product_not_found(self, client):
         resp = client.put(
-            "/admin/products/non-existent",
+            "/admin/products/000000000000000000000000",
             json={"name": "X"},
         )
         assert resp.status_code == 404
 
     def test_delete_product(self, client):
-        client.post("/admin/products", json=PAYLOAD)
-        resp = client.delete("/admin/products/kol-intelligence")
+        create_resp = client.post("/admin/products", json=PAYLOAD)
+        product_id = create_resp.json()["data"]["id"]
+        resp = client.delete(f"/admin/products/{product_id}")
         assert resp.status_code == 204
 
     def test_delete_product_not_found(self, client):
-        resp = client.delete("/admin/products/non-existent")
+        resp = client.delete("/admin/products/000000000000000000000000")
         assert resp.status_code == 404

@@ -6,53 +6,46 @@ from app.models.product import ProductConfig, ProductCreate, ProductUpdate
 
 class TestProductConfig:
 
-    def test_valid_product_id(self):
+    def test_create_product(self):
         p = ProductConfig(
-            product_id="kol-intelligence",
             name="KOL Intelligence",
             mongo_uri="mongodb://localhost",
             db_name="kol_intelligence",
         )
-        assert p.product_id == "kol-intelligence"
+        assert p.name == "KOL Intelligence"
+        assert p.id == ""
 
-    def test_invalid_product_id_with_spaces(self):
-        with pytest.raises(ValidationError):
-            ProductConfig(
-                product_id="kol intelligence",
-                name="KOL Intelligence",
-                mongo_uri="mongodb://localhost",
-                db_name="kol_intelligence",
-            )
-
-    def test_invalid_product_id_with_special_chars(self):
-        with pytest.raises(ValidationError):
-            ProductConfig(
-                product_id="kol@intelligence!",
-                name="KOL Intelligence",
-                mongo_uri="mongodb://localhost",
-                db_name="kol_intelligence",
-            )
-
-    def test_valid_product_id_with_underscore(self):
+    def test_create_with_id(self):
         p = ProductConfig(
-            product_id="kol_intelligence",
-            name="KOL Intelligence",
+            id="abc123",
+            name="Test",
             mongo_uri="mongodb://localhost",
-            db_name="kol_intelligence",
+            db_name="test",
         )
-        assert p.product_id == "kol_intelligence"
+        assert p.id == "abc123"
 
 
 class TestProductCreate:
 
     def test_valid_create(self):
         data = ProductCreate(
-            product_id="test-product",
             name="Test",
             mongo_uri="mongodb://localhost",
             db_name="test",
         )
-        assert data.product_id == "test-product"
+        assert data.name == "Test"
+
+    def test_requires_name(self):
+        with pytest.raises(ValidationError):
+            ProductCreate(mongo_uri="mongodb://localhost", db_name="test")
+
+    def test_requires_mongo_uri(self):
+        with pytest.raises(ValidationError):
+            ProductCreate(name="Test", db_name="test")
+
+    def test_requires_db_name(self):
+        with pytest.raises(ValidationError):
+            ProductCreate(name="Test", mongo_uri="mongodb://localhost")
 
 
 class TestProductUpdate:

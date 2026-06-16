@@ -1,0 +1,379 @@
+{
+  "info": {
+    "name": "Identity Service",
+    "description": "Reusable authentication service. Register a product first, then use its MongoDB _id in auth endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "product_id",
+      "value": ""
+    },
+    {
+      "key": "email",
+      "value": "alice@example.com"
+    },
+    {
+      "key": "password",
+      "value": "SecurePass123!"
+    },
+    {
+      "key": "access_token",
+      "value": ""
+    },
+    {
+      "key": "refresh_token",
+      "value": ""
+    },
+    {
+      "key": "verification_token",
+      "value": ""
+    },
+    {
+      "key": "reset_token",
+      "value": ""
+    },
+    {
+      "key": "new_password",
+      "value": "NewSecurePass456!"
+    }
+  ],
+  "item": [
+    {
+      "name": "Admin — Products",
+      "description": "Manage product registrations. The product _id returned on create is used in all auth endpoints.",
+      "item": [
+        {
+          "name": "Create Product",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('product_id', jsonData.data.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Application\",\n  \"mongo_uri\": \"mongodb+srv://souptik:1234@cluster0.dbtuf4t.mongodb.net/?appName=Cluster0\",\n  \"db_name\": \"my_app_db\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/products",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "products"]
+            }
+          },
+          "description": "Creates a product and auto-extracts the MongoDB _id into the product_id variable."
+        },
+        {
+          "name": "List Products",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/products",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "products"]
+            }
+          }
+        },
+        {
+          "name": "Get Product",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/admin/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "products", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My App (Updated)\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "products", "{{product_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "url": {
+              "raw": "{{base_url}}/admin/products/{{product_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "products", "{{product_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Auth Flow",
+      "description": "Run requests in order. Steps 4 and 7 require tokens from MongoDB (see docs). Steps 1 and 2 extract tokens into collection variables automatically.",
+      "item": [
+        {
+          "name": "1. Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "pm.collectionVariables.set('refresh_token', jsonData.refresh_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/{{product_id}}/auth/signup",
+              "host": ["{{base_url}}"],
+              "path": ["{{product_id}}", "auth", "signup"]
+            }
+          }
+        },
+        {
+          "name": "2. Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "pm.collectionVariables.set('refresh_token', jsonData.refresh_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/{{product_id}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["{{product_id}}", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "3. Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "pm.collectionVariables.set('refresh_token', jsonData.refresh_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/{{product_id}}/auth/refresh",
+              "host": ["{{base_url}}"],
+              "path": ["{{product_id}}", "auth", "refresh"]
+            }
+          }
+        },
+        {
+          "name": "4. Verify Email",
+          "description": "Requires verification_token from MongoDB users collection.",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{verification_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/{{product_id}}/auth/verify-email",
+              "host": ["{{base_url}}"],
+              "path": ["{{product_id}}", "auth", "verify-email"]
+            }
+          }
+        },
+        {
+          "name": "5. Resend Verification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/{{product_id}}/auth/verify-email/resend",
+              "host": ["{{base_url}}"],
+              "path": ["{{product_id}}", "auth", "verify-email", "resend"]
+            }
+          }
+        },
+        {
+          "name": "6. Password Reset — Request",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/{{product_id}}/auth/password-reset/request",
+              "host": ["{{base_url}}"],
+              "path": ["{{product_id}}", "auth", "password-reset", "request"]
+            }
+          }
+        },
+        {
+          "name": "7. Password Reset — Confirm",
+          "description": "Requires reset_token from MongoDB users collection. Updates the password variable on success.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('password', pm.collectionVariables.get('new_password'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{reset_token}}\",\n  \"new_password\": \"{{new_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/{{product_id}}/auth/password-reset/confirm",
+              "host": ["{{base_url}}"],
+              "path": ["{{product_id}}", "auth", "password-reset", "confirm"]
+            }
+          }
+        },
+        {
+          "name": "8. Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/{{product_id}}/auth/logout",
+              "host": ["{{base_url}}"],
+              "path": ["{{product_id}}", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

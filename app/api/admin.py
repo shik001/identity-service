@@ -12,13 +12,11 @@ async def create_product(
     body: ProductCreate,
     repo: ProductRepository = Depends(get_product_repository),
 ) -> dict[str, object]:
-    existing = await repo.get(body.product_id)
-    if existing is not None:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Product '{body.product_id}' already exists",
-        )
-    product = ProductConfig(**body.model_dump())
+    product = ProductConfig(
+        name=body.name,
+        mongo_uri=body.mongo_uri,
+        db_name=body.db_name,
+    )
     created = await repo.create(product)
     return {"data": created.model_dump(mode="json")}
 
