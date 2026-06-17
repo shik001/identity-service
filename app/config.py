@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     cors_origins: str = "*"
 
     config_db_uri: str = (
-        "mongodb+srv://souptik:1234@cluster0.dbtuf4t.mongodb.net/"
+        "mongodb+srv://dev22:ZRLttnSOTajTIhxh@cluster0.dbtuf4t.mongodb.net/"
         "?appName=Cluster0"
     )
     config_db_name: str = "identity_config"
