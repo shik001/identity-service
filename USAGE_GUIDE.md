@@ -515,6 +515,83 @@ Open **Auth Flow → 8. Logout** and click **Send** (204 No Content).
 
 The refresh token is now blacklisted. Trying **3. Refresh Token** again with the same token will return **401**.
 
+### Google Sign-In
+
+The service supports Google Sign-In via ID tokens. When a user authenticates with Google on your frontend (using the Google Sign-In SDK), you get an ID token. Send that token to this endpoint:
+
+**POST** `/{product_id}/auth/google`
+
+```json
+{
+  "id_token": "eyJhbGciOiJSUzI1NiIs..."
+}
+```
+
+**Success (200):** Same response shape as login — returns `access_token`, `refresh_token`, and user info.
+
+**How it works:**
+1. The service verifies the ID token using Google's public keys (JWKS)
+2. If the user already exists with that email (email/password user), their account is **linked** — they can now sign in with either method
+3. If the user already exists with that `google_sub`, a new token pair is returned
+4. If neither exists, a new user is created with `auth_provider: "google"`
+
+**Prerequisites:**
+- Set `GOOGLE_CLIENT_ID` in `.env` (your Google OAuth 2.0 client ID)
+- Optionally set `ALLOWED_EMAIL_DOMAIN` to restrict sign-ins to a specific domain (e.g., `yourcompany.com`)
+- The frontend must use the Google Sign-In SDK to obtain an ID token
+
+### Testing Google Sign-In from Postman
+
+Getting a real Google ID token requires OAuth flow. Here are two approaches:
+
+#### Option A: Use a test Google ID token (sandbox)
+
+Not possible — Google's JWKS verification requires a real signed token.
+
+#### Option B: Generate an ID token via OAuth playground
+
+1. Go to https://developers.google.com/oauthplayground
+2. Click the gear icon (⚙️) → check **"Use your own OAuth credentials"**
+3. Enter your **Client ID** and **Client Secret** from Google Cloud Console
+4. In the left panel, scroll to **"Google OAuth2 API v2"** → select **"https://www.googleapis.com/auth/userinfo.email"** and **"https://www.googleapis.com/auth/userinfo.profile"**
+5. Click **Authorize APIs** → sign in with your Google account
+6. Click **Exchange authorization code for tokens**
+7. Copy the **id_token** value
+8. Paste it into Postman's `google_id_token` collection variable
+9. Run **9. Google Sign-In** in the Auth Flow folder
+
+#### Option C: Frontend-first approach
+
+Build a simple HTML page that uses the Google Sign-In SDK, logs the ID token to the console, then paste it into Postman:
+
+```html
+<!-- Save as google-signin-test.html, open in browser -->
+<html>
+<body>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script>
+function handleCredentialResponse(response) {
+  console.log("ID Token:", response.credential);
+  alert("Copy the ID token from the console (F12 → Console)");
+}
+</script>
+<div id="g_id_onload"
+     data-client_id="YOUR_GOOGLE_CLIENT_ID"
+     data-callback="handleCredentialResponse">
+</div>
+<div class="g_id_signin" data-type="standard"></div>
+</body>
+</html>
+```
+
+After getting the ID token, paste it into Postman's `google_id_token` variable and run **9. Google Sign-In**.
+
+#### Option D: Skip Google verification for Postman testing
+
+If you want to test the endpoint without a real Google token, you can temporarily monkey-patch the service in tests (not recommended for production). The existing test suite uses a mock `GoogleAuthService` to test the endpoint logic without real tokens.
+
+---
+
 ### Chaining requests
 
 The collection is designed so that Steps 1–3 and Step 8 can be run sequentially without manual intervention — tokens flow automatically via collection variables. Steps 5 and 7 require you to paste tokens from MongoDB.
@@ -541,6 +618,7 @@ The collection is designed so that Steps 1–3 and Step 8 can be run sequentiall
 | POST | `/{id}/auth/login` | `{email, password}` | 200 — tokens + user |
 | POST | `/{id}/auth/refresh` | `{refresh_token}` | 200 — new token pair |
 | POST | `/{id}/auth/logout` | `{refresh_token}` | 204 — no content |
+| POST | `/{id}/auth/google` | `{id_token}` | 200 — tokens + user |
 | POST | `/{id}/auth/password-reset/request` | `{email}` | 204 — no content |
 | POST | `/{id}/auth/password-reset/confirm` | `{token, new_password}` | 200 — success message |
 | POST | `/{id}/auth/verify-email` | `{token}` | 200 — success message |

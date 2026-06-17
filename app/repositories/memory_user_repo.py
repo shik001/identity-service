@@ -25,6 +25,14 @@ class MemoryUserRepository(UserRepository):
                 return user
         return None
 
+    async def get_by_google_sub(
+        self, google_sub: str
+    ) -> User | None:
+        for user in self._store.values():
+            if user.google_sub == google_sub:
+                return user
+        return None
+
     async def create(self, user: User) -> User:
         self._store[user.email] = user.model_copy(deep=True)
         return self._store[user.email]

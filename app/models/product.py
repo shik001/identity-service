@@ -8,6 +8,7 @@ class ProductConfig(BaseModel):
     name: str
     mongo_uri: str
     db_name: str
+    jwt_secret: str | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -22,6 +23,7 @@ class ProductUpdate(BaseModel):
     name: str | None = None
     mongo_uri: str | None = None
     db_name: str | None = None
+    jwt_secret: str | None = None
 
 
 def now_utc() -> datetime:

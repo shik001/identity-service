@@ -35,6 +35,16 @@ class MongoUserRepository(UserRepository):
             return None
         return _user_adapter.validate_python(doc)
 
+    async def get_by_google_sub(
+        self, google_sub: str
+    ) -> User | None:
+        doc = await self._collection.find_one(
+            {"google_sub": google_sub}
+        )
+        if doc is None:
+            return None
+        return _user_adapter.validate_python(doc)
+
     async def create(self, user: User) -> User:
         doc = user.model_dump()
         await self._collection.insert_one(doc)

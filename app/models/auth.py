@@ -59,3 +59,7 @@ class VerifyEmailRequest(BaseModel):
 
 class VerifyEmailResendRequest(BaseModel):
     email: EmailStr
+
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str

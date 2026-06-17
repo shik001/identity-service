@@ -20,6 +20,11 @@ class UserRepository(ABC):
     ) -> User | None: ...
 
     @abstractmethod
+    async def get_by_google_sub(
+        self, google_sub: str
+    ) -> User | None: ...
+
+    @abstractmethod
     async def update(
         self, email: str, data: dict[str, object]
     ) -> User | None: ...

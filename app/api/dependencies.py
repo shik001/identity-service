@@ -11,6 +11,7 @@ from app.repositories.product_repository import ProductRepository
 from app.repositories.token_repository import TokenRepository
 from app.repositories.user_repo_factory import UserRepositoryFactory
 from app.repositories.user_repository import UserRepository
+from app.services.google_auth import GoogleAuthService
 from app.services.password_service import PasswordService
 from app.services.token_service import TokenService
 
@@ -71,6 +72,18 @@ def get_password_service() -> PasswordService:
 def get_token_service(request: Request) -> TokenService:
     settings: Settings = request.app.state.settings
     return TokenService(settings)
+
+
+def get_google_auth_service(request: Request) -> GoogleAuthService:
+    service: GoogleAuthService | None = getattr(
+        request.app.state, "google_auth_service", None
+    )
+    if service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Google authentication not configured",
+        )
+    return service
 
 
 async def get_current_user(

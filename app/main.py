@@ -11,6 +11,7 @@ from app.config import Settings
 from app.database import create_mongo_client
 from app.middleware import RequestIDMiddleware
 from app.repositories.user_repo_factory import UserRepositoryFactory
+from app.services.google_auth import GoogleAuthService
 
 
 @asynccontextmanager
@@ -21,6 +22,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.db = db
         app.state.mongo_client = client
     app.state.user_repo_factory = UserRepositoryFactory()
+    if settings.google_client_id:
+        app.state.google_auth_service = GoogleAuthService(
+            google_client_id=settings.google_client_id,
+            allowed_domain=settings.allowed_email_domain,
+        )
     yield
     if hasattr(app.state, "user_repo_factory"):
         await app.state.user_repo_factory.close_all()

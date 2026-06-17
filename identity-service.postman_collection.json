@@ -40,6 +40,10 @@
     {
       "key": "new_password",
       "value": "NewSecurePass456!"
+    },
+    {
+      "key": "google_id_token",
+      "value": ""
     }
   ],
   "item": [
@@ -354,6 +358,40 @@
               "raw": "{{base_url}}/{{product_id}}/auth/logout",
               "host": ["{{base_url}}"],
               "path": ["{{product_id}}", "auth", "logout"]
+            }
+          }
+        },
+        {
+          "name": "9. Google Sign-In",
+          "description": "Sign in with a Google ID token. Set google_id_token collection variable first. For new users, this creates an account. For existing users with matching email, it links the accounts.",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', jsonData.access_token);",
+                  "pm.collectionVariables.set('refresh_token', jsonData.refresh_token);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_token\": \"{{google_id_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/{{product_id}}/auth/google",
+              "host": ["{{base_url}}"],
+              "path": ["{{product_id}}", "auth", "google"]
             }
           }
         }

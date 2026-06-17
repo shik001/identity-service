@@ -11,6 +11,8 @@ class User(BaseModel):
     email: str
     password_hash: str
     email_verified: bool = False
+    google_sub: str | None = None
+    auth_provider: str = "email"
     verification_token: str | None = None
     reset_token: str | None = None
     reset_token_expires: datetime | None = None
@@ -29,3 +31,5 @@ class UserUpdate(BaseModel):
     reset_token: str | None = None
     reset_token_expires: datetime | None = None
     password_hash: str | None = None
+    google_sub: str | None = None
+    auth_provider: str | None = None

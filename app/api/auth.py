@@ -4,12 +4,14 @@ from datetime import UTC, datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Path, status
 
 from app.api.dependencies import (
+    get_google_auth_service,
     get_password_service,
     get_token_repository,
     get_token_service,
     get_user_repository,
 )
 from app.models.auth import (
+    GoogleLoginRequest,
     LoginRequest,
     LoginResponse,
     LogoutRequest,
@@ -27,8 +29,11 @@ from app.models.token import RefreshTokenPayload
 from app.models.user import User
 from app.repositories.token_repository import TokenRepository
 from app.repositories.user_repository import UserRepository
+from app.services.google_auth import GoogleAuthService
 from app.services.password_service import PasswordService
 from app.services.token_service import TokenService
+
+_PLACEHOLDER_HASH = PasswordService().hash("__google_only__")
 
 router = APIRouter(prefix="/{product_id}/auth", tags=["auth"])
 
@@ -66,6 +71,61 @@ async def signup(
         access_token=token_pair.access_token,
         refresh_token=token_pair.refresh_token,
         user=UserResponse(email=body.email, email_verified=False),
+    )
+
+
+@router.post("/google")
+async def google_auth(
+    body: GoogleLoginRequest,
+    product_id: str = Path(...),
+    user_repo: UserRepository = Depends(get_user_repository),
+    token_service: TokenService = Depends(get_token_service),
+    google_service: GoogleAuthService = Depends(
+        get_google_auth_service
+    ),
+) -> LoginResponse:
+    try:
+        claims = google_service.verify_id_token(body.id_token)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(exc),
+        )
+
+    from typing import cast
+
+    sub = cast(str, claims.get("sub", ""))
+    email = cast(str, claims.get("email", ""))
+
+    user = await user_repo.get_by_google_sub(sub)
+    if user is None:
+        user = await user_repo.get_by_email(email)
+        if user is not None:
+            await user_repo.update(
+                email,
+                {"google_sub": sub, "auth_provider": "google"},
+            )
+        else:
+            user = User(
+                email=email,
+                password_hash=_PLACEHOLDER_HASH,
+                email_verified=True,
+                google_sub=sub,
+                auth_provider="google",
+            )
+            await user_repo.create(user)
+            user = await user_repo.get_by_email(email)
+
+    token_pair = token_service.create_token_pair(
+        email=email, product_id=product_id
+    )
+
+    return LoginResponse(
+        access_token=token_pair.access_token,
+        refresh_token=token_pair.refresh_token,
+        user=UserResponse(
+            email=email, email_verified=True
+        ),
     )
 
 
