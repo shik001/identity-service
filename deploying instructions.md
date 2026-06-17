@@ -44,7 +44,7 @@ az containerapp create \\
   --registry-username aivideosearchapi \\
   --registry-password <ACR_PASSWORD> \\
   --env-vars \\
-        CONFIG_DB_URI="mongodb+srv://dev22:ZRLttnSOTajTIhxh@cluster0.dbtuf4t.mongodb.net/?appName=Cluster0" \
+        CONFIG_DB_URI="mongodb+srv://souptik:1234@cluster0.dbtuf4t.mongodb.net/?appName=Cluster0" \
 \
     CONFIG_DB_NAME="identity_config" \\
     JWT_SECRET="change-me-in-production" \\
